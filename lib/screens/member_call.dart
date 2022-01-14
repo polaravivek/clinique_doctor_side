@@ -265,7 +265,12 @@ class _MemberCallState extends State<MemberCall> {
                               });
                             });
                           },
-                          child: Text("CALL NEXT MEMBER"),
+                          child: Text(
+                            "CALL FIRST MEMBER",
+                            style: TextStyle(
+                              fontSize: 12,
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -284,8 +289,37 @@ class _MemberCallState extends State<MemberCall> {
                             elevation: 5,
                             primary: Color(0xFF8A1818),
                           ),
-                          onPressed: () {},
-                          child: Text("SEND TO HOLD"),
+                          onPressed: () {
+                            _firestore
+                                .collection('queue')
+                                .doc('${widget.uid}')
+                                .collection('queue')
+                                .snapshots()
+                                .forEach((element) {
+                              element.docs.forEach((element) {
+                                if (_firstUid.toString() ==
+                                    element.id.toString()) {
+                                  element.reference.get().then((value) {
+                                    _firestore
+                                        .collection('queue')
+                                        .doc('${widget.uid}')
+                                        .collection('holdQueue')
+                                        .doc(_firstUid.toString())
+                                        .set(value.data())
+                                        .then((value) {
+                                      element.reference.delete();
+                                    });
+                                  });
+                                }
+                              });
+                            });
+                          },
+                          child: Text(
+                            "SEND TO HOLD",
+                            style: TextStyle(
+                              fontSize: 12,
+                            ),
+                          ),
                         ),
                       ),
                     ),

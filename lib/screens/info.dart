@@ -1,7 +1,6 @@
 import 'package:clinique_doctor/screens/addLocation.dart';
 import 'package:clinique_doctor/screens/homepage.dart';
 import 'package:clinique_doctor/model/doctor_info.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';

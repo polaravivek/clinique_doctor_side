@@ -13,6 +13,7 @@ final auth = FirebaseAuth.instance;
 var _count = 0;
 List<String> _arr = [];
 List<String> _holdArr = [];
+var _firstUid;
 
 class Homepage extends StatefulWidget {
   final title;
@@ -267,10 +268,15 @@ class _HomepageState extends State<Homepage> {
                             } else {
                               final snap = snapshot.data.docs;
                               _arr.clear();
+                              int index = 0;
                               for (var sn in snap) {
+                                if (index == 0) {
+                                  _firstUid = sn.id;
+                                }
                                 LinkedHashMap<String, dynamic> s = sn.data();
                                 var name = s['name'];
                                 _arr.add(name);
+                                index++;
                               }
 
                               if (_arr.length == 0) {
@@ -369,37 +375,95 @@ class _HomepageState extends State<Homepage> {
                             elevation: 5,
                             primary: Color(0xFF8A1818),
                           ),
-                          onPressed: () {
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => MemberCall(
-                                        widget.title, auth.currentUser.uid)));
-                          },
-                          child: Text("CALL FIRST MEMBER"),
+                          onPressed: (isReal)
+                              ? () {
+                                  //TODO: need to work on hold queue call member
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) => MemberCall(
+                                              widget.title,
+                                              auth.currentUser.uid)));
+                                }
+                              : () {
+                                  print("joint hold member");
+                                  _firestore
+                                      .collection('queue')
+                                      .doc('${auth.currentUser.uid}')
+                                      .collection('holdQueue')
+                                      .orderBy("time")
+                                      .get()
+                                      .then((value) {
+                                    final elem = value.docs.first;
+                                    print(elem.data());
+                                    _firestore
+                                        .collection('queue')
+                                        .doc('${auth.currentUser.uid}')
+                                        .collection('queue')
+                                        .doc(elem.id)
+                                        .set(elem.data())
+                                        .then(
+                                            (value) => elem.reference.delete());
+                                  });
+                                },
+                          child: Text(
+                            (isReal)
+                                ? "CALL GREEN MEMBER"
+                                : "JOINT HOLD MEMBER",
+                            style: TextStyle(
+                              fontSize: 12,
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                    Expanded(
-                      child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 5),
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.all(
-                                Radius.circular(40),
+                    (isReal)
+                        ? Expanded(
+                            child: Container(
+                              padding: EdgeInsets.symmetric(horizontal: 5),
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.all(
+                                      Radius.circular(40),
+                                    ),
+                                  ),
+                                  padding: EdgeInsets.symmetric(vertical: 15),
+                                  textStyle: const TextStyle(fontSize: 14),
+                                  elevation: 5,
+                                  primary: Color(0xFF8A1818),
+                                ),
+                                onPressed: () {
+                                  print("send to hold button pressed");
+                                  _firestore
+                                      .collection('queue')
+                                      .doc('${auth.currentUser.uid}')
+                                      .collection('queue')
+                                      .orderBy("time")
+                                      .get()
+                                      .then((value) {
+                                    final elem = value.docs.first;
+                                    print(elem.data());
+                                    _firestore
+                                        .collection('queue')
+                                        .doc('${auth.currentUser.uid}')
+                                        .collection('holdQueue')
+                                        .doc(elem.id)
+                                        .set(elem.data())
+                                        .then(
+                                            (value) => elem.reference.delete());
+                                  });
+                                },
+                                child: Text(
+                                  "SEND TO HOLD",
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                  ),
+                                ),
                               ),
                             ),
-                            padding: EdgeInsets.symmetric(vertical: 15),
-                            textStyle: const TextStyle(fontSize: 14),
-                            elevation: 5,
-                            primary: Color(0xFF8A1818),
-                          ),
-                          onPressed: () {},
-                          child: Text("SEND IT TO HOLD"),
-                        ),
-                      ),
-                    ),
+                          )
+                        : const SizedBox(),
                   ],
                 ),
               ),
