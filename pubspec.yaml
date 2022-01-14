@@ -11,6 +11,7 @@ environment:
 dependencies:
   cupertino_icons: ^1.0.2
   dio: ^4.0.1
+  firebase_messaging: ^11.2.5
   firebase_storage: ^10.1.0
   flutter:
     sdk: flutter
@@ -24,6 +25,7 @@ dependencies:
   gradient_widgets: ^0.6.0
   image_cropper: ^1.4.1
   image_picker: ^0.8.4+4
+  lint: ^1.8.1
   lottie: ^1.1.0
   path_provider: ^2.0.7
   shared_preferences: 2.0.6

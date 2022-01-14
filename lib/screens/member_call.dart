@@ -1,8 +1,11 @@
 import 'dart:collection';
+import 'dart:convert';
 import 'package:clinique_doctor/widgets/build_queue_member.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:lottie/lottie.dart';
 
 var _count = 0;
@@ -23,6 +26,52 @@ class MemberCall extends StatefulWidget {
 
 class _MemberCallState extends State<MemberCall> {
   List<String> _arr = [];
+  List<String> _tokens = [];
+
+  FirebaseMessaging firebaseMessaging = FirebaseMessaging.instance;
+
+  String constructFCMPayload(String token, int number) {
+    return jsonEncode({
+      'to': token,
+      'data': {},
+      'notification': {
+        'title': (number == 0)
+            ? "It's Your Turn"
+            : (number == 1)
+                ? "It's Your Number Go!"
+                : (number == 2)
+                    ? "Be Ready You Have To Go Next"
+                    : (number != 3)
+                        ? "Your Number: $number"
+                        : "Your Number Is About To Come",
+        'body': 'sent to you from ${widget.title}',
+      },
+    });
+  }
+
+  Future<void> sendPushMessage(String _token, int index) async {
+    if (_token == null) {
+      print('Unable to send FCM message, no token exists.');
+      return;
+    }
+
+    try {
+      await http
+          .post(
+            Uri.parse('https://fcm.googleapis.com/fcm/send'),
+            headers: <String, String>{
+              'Content-Type': 'application/json; charset=UTF-8',
+              'Authorization':
+                  'key=AAAANUzwdEg:APA91bGheTPXvLz8S-zhS7FeBUbg8ySrVItGRUotk2hyDraw8E43GOdTU_5bUfrjpzULa1YX5Mk5ntZ4OOyclEvtNpXw49eHTi8LPWIL0-SVPcYjz5Cw-uZciQlkb_pZuariOw3e6rdW',
+            },
+            body: constructFCMPayload(_token, index),
+          )
+          .then((value) => print(value.body));
+      print('FCM request for device sent!');
+    } catch (e) {
+      print(e);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -177,15 +226,19 @@ class _MemberCallState extends State<MemberCall> {
                       } else {
                         final snap = snapshot.data.docs;
                         _arr.clear();
+                        _tokens.clear();
                         int index = 0;
                         for (var sn in snap) {
                           if (index == 0) {
                             _firstUid = sn.id;
                             print(_firstUid);
                           }
+
                           LinkedHashMap<String, dynamic> s = sn.data();
                           var name = s['name'];
+                          String token = s['token'];
                           _arr.add(name);
+                          _tokens.add(token);
                           index++;
                         }
 
@@ -244,6 +297,7 @@ class _MemberCallState extends State<MemberCall> {
                                 print(_firstUid.toString());
                                 if (_firstUid.toString() ==
                                     element.id.toString()) {
+                                  print(_tokens);
                                   element.reference.delete().then((value) {
                                     _firestore
                                         .collection('queue')
@@ -257,6 +311,15 @@ class _MemberCallState extends State<MemberCall> {
                                           .doc('${widget.uid}')
                                           .update({'count': --count}).then(
                                               (value) {
+                                        for (var i = 0;
+                                            i < _tokens.length;
+                                            i++) {
+                                          if (_tokens[i] != null) {
+                                            sendPushMessage(_tokens[i], i + 1)
+                                                .then((value) => print(
+                                                    "notification sent successfully"));
+                                          }
+                                        }
                                         // Navigator.pop(context);
                                       });
                                     });
@@ -264,6 +327,10 @@ class _MemberCallState extends State<MemberCall> {
                                 }
                               });
                             });
+
+                            // sendPushMessage(
+                            //         "e57KZ-EGQGOYClgr4H5gGc:APA91bG9x9cWMnGymSs43Cfe-WzwEM20QSnaVRwuTqgRxFnqn31zaKJNnJytn-GSaca8Ah0AEVFzMC9xJNfqnkjNygHNZ-CX7ia44LDw4uYgVw1iBeYVB6g6_pX9gN_Cd6OzcZayB4eL")
+                            //     .then((value) => print("done"));
                           },
                           child: Text(
                             "CALL FIRST MEMBER",
