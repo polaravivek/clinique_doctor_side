@@ -1,8 +1,10 @@
 import 'dart:collection';
+import 'dart:convert';
 
 import 'package:clinique_doctor/screens/member_call.dart';
 import 'package:clinique_doctor/widgets/build_queue_member.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:lottie/lottie.dart';
@@ -12,8 +14,10 @@ FirebaseFirestore _firestore = FirebaseFirestore.instance;
 final auth = FirebaseAuth.instance;
 var _count = 0;
 List<String> _arr = [];
+List<String> _tokens = [];
 List<String> _holdArr = [];
 var _firstUid;
+bool forFirst = true;
 
 class Homepage extends StatefulWidget {
   final title;
@@ -42,6 +46,53 @@ class _HomepageState extends State<Homepage> {
         Navigator.pushNamedAndRemoveUntil(
             context, "/login", (Route<dynamic> route) => false);
       });
+    }
+
+    String constructFCMPayload(String token, int number) {
+      return jsonEncode({
+        'to': token,
+        'data': {},
+        'notification': {
+          'title': (number != null)
+              ? (number == 0)
+                  ? "It's Your Turn"
+                  : (number == 1)
+                      ? "It's Your Number Go!"
+                      : (number == 2)
+                          ? "Be Ready You Have To Go Next"
+                          : (number != 3)
+                              ? "Your Number: $number"
+                              : "Your Number Is About To Come"
+              : "Joint You With Queue",
+          'body': (number != null)
+              ? 'sent to you from ${widget.title}'
+              : "Doctor Put You On Queue It's Your Turn",
+        },
+      });
+    }
+
+    Future<void> sendPushMessage(String _token, int index) async {
+      if (_token == null) {
+        print('Unable to send FCM message, no token exists.');
+        return;
+      }
+
+      try {
+        await http
+            .post(
+              Uri.parse('https://fcm.googleapis.com/fcm/send'),
+              headers: <String, String>{
+                'Content-Type': 'application/json; charset=UTF-8',
+                'Authorization':
+                    'key=AAAANUzwdEg:APA91bGheTPXvLz8S-zhS7FeBUbg8ySrVItGRUotk2hyDraw8E43GOdTU_5bUfrjpzULa1YX5Mk5ntZ4OOyclEvtNpXw49eHTi8LPWIL0-SVPcYjz5Cw-uZciQlkb_pZuariOw3e6rdW',
+              },
+              body: constructFCMPayload(_token, index),
+            )
+            .then((value) => print(value.body));
+        print('FCM request for device sent!');
+      } catch (e) {
+        print(e);
+      }
     }
 
     return SafeArea(
@@ -268,6 +319,8 @@ class _HomepageState extends State<Homepage> {
                             } else {
                               final snap = snapshot.data.docs;
                               _arr.clear();
+                              _tokens.clear();
+
                               int index = 0;
                               for (var sn in snap) {
                                 if (index == 0) {
@@ -275,7 +328,9 @@ class _HomepageState extends State<Homepage> {
                                 }
                                 LinkedHashMap<String, dynamic> s = sn.data();
                                 var name = s['name'];
+                                String token = s['token'];
                                 _arr.add(name);
+                                _tokens.add(token);
                                 index++;
                               }
 
@@ -377,7 +432,32 @@ class _HomepageState extends State<Homepage> {
                           ),
                           onPressed: (isReal)
                               ? () {
-                                  //TODO: need to work on hold queue call member
+                                  if (forFirst) {
+                                    forFirst = false;
+                                    print(forFirst);
+                                    if (_tokens.length >= 4) {
+                                      print("first");
+                                      for (var i = 0; i < 4; i++) {
+                                        if (_tokens[i] != null) {
+                                          sendPushMessage(_tokens[i], i + 1)
+                                              .then(
+                                            (value) => print(
+                                                "notification sent successfully"),
+                                          );
+                                        }
+                                      }
+                                    } else {
+                                      print("second");
+                                      for (var i = 0; i < _tokens.length; i++) {
+                                        if (_tokens[i] != null) {
+                                          sendPushMessage(_tokens[i], i + 1)
+                                              .then((value) => print(
+                                                  "notification sent successfully"));
+                                        }
+                                      }
+                                    }
+                                  }
+
                                   Navigator.push(
                                       context,
                                       MaterialPageRoute(
@@ -402,8 +482,11 @@ class _HomepageState extends State<Homepage> {
                                         .collection('queue')
                                         .doc(elem.id)
                                         .set(elem.data())
-                                        .then(
-                                            (value) => elem.reference.delete());
+                                        .then((value) {
+                                      sendPushMessage(
+                                          elem.data()['token'], null);
+                                      elem.reference.delete();
+                                    });
                                   });
                                 },
                           child: Text(

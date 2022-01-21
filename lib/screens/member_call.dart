@@ -35,16 +35,20 @@ class _MemberCallState extends State<MemberCall> {
       'to': token,
       'data': {},
       'notification': {
-        'title': (number == 0)
-            ? "It's Your Turn"
-            : (number == 1)
-                ? "It's Your Number Go!"
-                : (number == 2)
-                    ? "Be Ready You Have To Go Next"
-                    : (number != 3)
-                        ? "Your Number: $number"
-                        : "Your Number Is About To Come",
-        'body': 'sent to you from ${widget.title}',
+        'title': (number != null)
+            ? (number == 0)
+                ? "It's Your Turn"
+                : (number == 1)
+                    ? "It's Your Number Go!"
+                    : (number == 2)
+                        ? "Be Ready You Have To Go Next"
+                        : (number != 3)
+                            ? "Your Number: $number"
+                            : "Your Number Is About To Come"
+            : "Put You On Hold",
+        'body': (number != null)
+            ? 'sent to you from ${widget.title}'
+            : "Doctor Put You On Hold Because You Are Late",
       },
     });
   }
@@ -290,50 +294,36 @@ class _MemberCallState extends State<MemberCall> {
                                 .collection('queue')
                                 .doc('${widget.uid}')
                                 .collection('queue')
-                                .snapshots()
-                                .forEach((element) {
-                              element.docs.forEach((element) {
-                                print(element.id);
-                                print(_firstUid.toString());
-                                if (_firstUid.toString() ==
-                                    element.id.toString()) {
-                                  print(_tokens);
-                                  element.reference.delete().then((value) {
-                                    _firestore
-                                        .collection('queue')
-                                        .doc('${widget.uid}')
-                                        .get()
-                                        .then((value) {
-                                      var count = value["count"];
-
-                                      _firestore
-                                          .collection('queue')
-                                          .doc('${widget.uid}')
-                                          .update({'count': --count}).then(
-                                              (value) {
-                                        for (var i = 0;
-                                            i < _tokens.length;
-                                            i++) {
-                                          if (_tokens[i] != null) {
-                                            sendPushMessage(_tokens[i], i + 1)
-                                                .then((value) => print(
-                                                    "notification sent successfully"));
-                                          }
-                                        }
-                                        // Navigator.pop(context);
-                                      });
-                                    });
+                                .orderBy("time")
+                                .get()
+                                .then((value) {
+                              final elem = value.docs.first;
+                              print(elem.data());
+                              elem.reference.delete().then((value) {
+                                _firestore
+                                    .collection('queue')
+                                    .doc('${widget.uid}')
+                                    .get()
+                                    .then((value) {
+                                  var count = value["count"];
+                                  _firestore
+                                      .collection('queue')
+                                      .doc('${widget.uid}')
+                                      .update({'count': --count}).then((value) {
+                                    for (var i = 0; i < _tokens.length; i++) {
+                                      if (_tokens[i] != null) {
+                                        sendPushMessage(_tokens[i], i + 1).then(
+                                            (value) => print(
+                                                "notification sent successfully"));
+                                      }
+                                    }
                                   });
-                                }
+                                });
                               });
                             });
-
-                            // sendPushMessage(
-                            //         "e57KZ-EGQGOYClgr4H5gGc:APA91bG9x9cWMnGymSs43Cfe-WzwEM20QSnaVRwuTqgRxFnqn31zaKJNnJytn-GSaca8Ah0AEVFzMC9xJNfqnkjNygHNZ-CX7ia44LDw4uYgVw1iBeYVB6g6_pX9gN_Cd6OzcZayB4eL")
-                            //     .then((value) => print("done"));
                           },
                           child: Text(
-                            "CALL FIRST MEMBER",
+                            "CALL NEXT MEMBER",
                             style: TextStyle(
                               fontSize: 12,
                             ),
@@ -361,23 +351,20 @@ class _MemberCallState extends State<MemberCall> {
                                 .collection('queue')
                                 .doc('${widget.uid}')
                                 .collection('queue')
-                                .snapshots()
-                                .forEach((element) {
-                              element.docs.forEach((element) {
-                                if (_firstUid.toString() ==
-                                    element.id.toString()) {
-                                  element.reference.get().then((value) {
-                                    _firestore
-                                        .collection('queue')
-                                        .doc('${widget.uid}')
-                                        .collection('holdQueue')
-                                        .doc(_firstUid.toString())
-                                        .set(value.data())
-                                        .then((value) {
-                                      element.reference.delete();
-                                    });
-                                  });
-                                }
+                                .orderBy("time")
+                                .get()
+                                .then((value) {
+                              final elem = value.docs.first;
+                              print(elem.data()['token']);
+                              _firestore
+                                  .collection('queue')
+                                  .doc('${auth.currentUser.uid}')
+                                  .collection('holdQueue')
+                                  .doc(elem.id)
+                                  .set(elem.data())
+                                  .then((value) {
+                                sendPushMessage(elem.data()['token'], null);
+                                elem.reference.delete();
                               });
                             });
                           },
