@@ -6,7 +6,7 @@ publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: ">=2.7.0 <3.0.0"
+  sdk: ">=2.13.0 <3.0.0"
 
 dependencies:
   cupertino_icons: ^1.0.2
@@ -25,11 +25,14 @@ dependencies:
   gradient_widgets: ^0.6.0
   image_cropper: ^1.4.1
   image_picker: ^0.8.4+4
+  intl: ^0.17.0
   lint: ^1.8.1
   lottie: ^1.1.0
   path_provider: ^2.0.7
   shared_preferences: 2.0.6
   splashscreen: null
+  styled_widget: ^0.4.0+3
+  syncfusion_flutter_calendar: ^19.4.43
 
 dev_dependencies:
   cloud_firestore: 2.3.0

@@ -1,9 +1,12 @@
 import 'dart:async';
+import 'package:clinique_doctor/controller/homepage.controller.dart';
+import 'package:clinique_doctor/controller/main.controller.dart';
 import 'package:clinique_doctor/screens/homepage.dart';
 import 'package:clinique_doctor/screens/info.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -17,6 +20,7 @@ var isAdded;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  Get.lazyPut<HomePageController>(() => HomePageController());
 
   SharedPreferences prefs = await SharedPreferences.getInstance();
 
@@ -86,6 +90,9 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   final auth = FirebaseAuth.instance;
   final fdRef = FirebaseDatabase.instance.reference();
+  MainController mainController = Get.put(MainController());
+  HomePageController homePageController = Get.find<HomePageController>();
+
   var clinicName = "";
 
   @override
@@ -94,11 +101,12 @@ class _MyAppState extends State<MyApp> {
       fdRef
           .child("doctorInfo")
           .child("clinicInfo")
-          .child(auth.currentUser.uid)
+          .child(auth.currentUser!.uid)
           .once()
           .then((value) {
         setState(() {
           clinicName = value.value['clinicName'];
+          mainController.clinicTitle.value = clinicName;
         });
         startTime();
       });
@@ -110,7 +118,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   startTime() async {
-    var duration = new Duration(seconds: 2);
+    var duration = new Duration(seconds: 3);
     return new Timer(duration, route);
   }
 
@@ -128,7 +136,8 @@ class _MyAppState extends State<MyApp> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => Homepage(clinicName),
+          builder: (context) =>
+              Homepage(clinicName, homePageController.modelDoctorInfo),
         ),
       );
     }

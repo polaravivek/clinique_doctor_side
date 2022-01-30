@@ -5,23 +5,24 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'dart:io';
 
-LatLng _center;
-LatLng newLocation;
+LatLng? _center;
+LatLng? newLocation;
 
 class AddLocation extends StatefulWidget {
   final ModelDoctorInfo model;
   final File file;
 
-  const AddLocation({Key key, this.model, this.file}) : super(key: key);
+  const AddLocation({Key? key, required this.model, required this.file})
+      : super(key: key);
 
   @override
   State<AddLocation> createState() => _AddLocationState();
 }
 
 class _AddLocationState extends State<AddLocation> {
-  GoogleMapController _myController;
+  late GoogleMapController _myController;
   Map<MarkerId, Marker> markers = <MarkerId, Marker>{};
-  CameraPosition _cameraPosition;
+  late CameraPosition _cameraPosition;
 
   Future<void> _onMapCreated(GoogleMapController controller) async {
     _myController = controller;
@@ -29,7 +30,7 @@ class _AddLocationState extends State<AddLocation> {
     await _determinePosition();
 
     _myController.animateCamera(
-      CameraUpdate.newLatLngZoom(_center, 13),
+      CameraUpdate.newLatLngZoom(_center!, 13),
     );
   }
 
@@ -38,11 +39,11 @@ class _AddLocationState extends State<AddLocation> {
         desiredAccuracy: LocationAccuracy.best);
     setState(() {
       _center = LatLng(position.latitude, position.longitude);
-      _cameraPosition = CameraPosition(target: _center, zoom: 17.0);
+      _cameraPosition = CameraPosition(target: _center!, zoom: 17.0);
 
       newLocation = _center;
       markers[MarkerId('id-1')] = Marker(
-        position: _center,
+        position: _center!,
         markerId: MarkerId('id-1'),
         draggable: true,
         onDragEnd: (newPosition) {
@@ -83,7 +84,7 @@ class _AddLocationState extends State<AddLocation> {
                             print("tapped");
                             _determinePosition();
                             _myController.animateCamera(
-                                CameraUpdate.newLatLngZoom(_center, 13));
+                                CameraUpdate.newLatLngZoom(_center!, 13));
                           },
                           materialTapTargetSize: MaterialTapTargetSize.padded,
                           backgroundColor: Colors.green,
@@ -112,7 +113,7 @@ class _AddLocationState extends State<AddLocation> {
                         context,
                         MaterialPageRoute(
                             builder: (context) => Information(
-                                newLocation, widget.model, widget.file)));
+                                newLocation!, widget.model, widget.file)));
                   },
                   child: Text(
                     'ADD LOCATION',

@@ -21,9 +21,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
 class Information extends StatefulWidget {
-  final LatLng location;
-  final ModelDoctorInfo model;
-  final File image;
+  final LatLng? location;
+  final ModelDoctorInfo? model;
+  final File? image;
 
   Information(this.location, this.model, this.image);
 
@@ -32,7 +32,7 @@ class Information extends StatefulWidget {
 }
 
 class _InformationState extends State<Information> {
-  File _image;
+  late File _image;
   final ImagePicker _picker = ImagePicker();
   final fdRef = FirebaseDatabase.instance.reference();
   final auth = FirebaseAuth.instance;
@@ -60,30 +60,30 @@ class _InformationState extends State<Information> {
   @override
   void initState() {
     if (widget.location != null) {
-      fetchLocation(widget.location);
+      fetchLocation(widget.location!);
     }
     final snaps = fdRef
         .child('doctorInfo')
         .child('doctorPersonalInfo')
-        .child('${auth.currentUser.uid}')
+        .child('${auth.currentUser?.uid}')
         .reference();
     snaps.once().then((DataSnapshot snapshot) {
       doctorName = snapshot.value['name'];
     });
 
     if (widget.model != null) {
-      _clinicNameController.text = widget.model.clinicName;
-      _feeController.text = widget.model.fees;
-      _specializedController.text = widget.model.specialization;
-      _morningTimeController.text = widget.model.morningTime;
-      _eveningTimeController.text = widget.model.eveningTime;
-      _dayOffController.text = widget.model.dayOff;
-      _lateAllowedController.text = widget.model.lateTime;
+      _clinicNameController.text = widget.model!.clinicName!;
+      _feeController.text = widget.model!.fees!;
+      _specializedController.text = widget.model!.specialization!;
+      _morningTimeController.text = widget.model!.morningTime!;
+      _eveningTimeController.text = widget.model!.eveningTime!;
+      _dayOffController.text = widget.model!.dayOff!;
+      _lateAllowedController.text = widget.model!.lateTime!;
     }
 
     if (widget.image != null) {
       setState(() {
-        _image = widget.image;
+        _image = widget.image!;
       });
     }
     super.initState();
@@ -91,7 +91,7 @@ class _InformationState extends State<Information> {
 
   @override
   Widget build(BuildContext context) {
-    Future<File> compressImage(String path, int quality) async {
+    Future<File?> compressImage(String path, int quality) async {
       final newPath = p.join((await getTemporaryDirectory()).path,
           '${DateTime.now()}.${p.extension(path)}');
 
@@ -124,23 +124,17 @@ class _InformationState extends State<Information> {
       file = await compressImage(file.path, 35);
 
       setState(() {
-        _image = file;
+        _image = file!;
       });
     }
 
-    Future UploadPic(BuildContext context) async {
+    Future uploadPic(BuildContext context) async {
       String fileName = p.basename(_image.path);
       final fireStorageReference =
           FirebaseStorage.instance.ref().child(fileName);
       final uploadTask = fireStorageReference.putFile(File(_image.path));
       await uploadTask.whenComplete(() => print('complete'));
     }
-
-    // Future<String> downloadURL(String imageName) async {
-    //   String downloadURL =
-    //       await FirebaseStorage.instance.ref(imageName).getDownloadURL();
-    //   return downloadURL;
-    // }
 
     SystemChrome.setSystemUIOverlayStyle(
       SystemUiOverlayStyle(
@@ -275,20 +269,20 @@ class _InformationState extends State<Information> {
                         onPressed: () {
                           added = true;
                           ModelDoctorInfo model = new ModelDoctorInfo(
-                              _clinicNameController.value.text,
-                              "",
-                              "",
-                              _eveningTimeController.value.text,
-                              _feeController.value.text,
-                              _morningTimeController.value.text,
-                              _specializedController.value.text,
-                              0.0,
-                              0.0,
-                              0.0,
-                              0,
-                              "",
-                              _dayOffController.value.text,
-                              _lateAllowedController.value.text);
+                              clinicName: _clinicNameController.value.text,
+                              address: "",
+                              doctorName: "",
+                              eveningTime: _eveningTimeController.value.text,
+                              morningTime: _morningTimeController.value.text,
+                              specialization: _specializedController.value.text,
+                              docId: "",
+                              fees: _feeController.value.text,
+                              dayOff: _dayOffController.value.text,
+                              latitude: 0.0,
+                              longitude: 0.0,
+                              lateTime: _lateAllowedController.value.text,
+                              distance: 0.0,
+                              review: 0);
                           Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -344,18 +338,43 @@ class _InformationState extends State<Information> {
                             primary: Color(0xFF8A1818),
                           ),
                           onPressed: () async {
-                            UploadPic(context);
+                            uploadPic(context);
+                            ModelDoctorInfo modelDoctorInfo =
+                                new ModelDoctorInfo(
+                                    address: _addressController.value.text,
+                                    clinicName:
+                                        _clinicNameController.value.text,
+                                    eveningTime:
+                                        _eveningTimeController.value.text,
+                                    fees: _feeController.value.text,
+                                    latitude: widget.location!.latitude,
+                                    longitude: widget.location!.longitude,
+                                    morningTime:
+                                        _morningTimeController.value.text,
+                                    doctorName: doctorName,
+                                    review: 0,
+                                    dayOff: _dayOffController.value.text,
+                                    specialization:
+                                        _specializedController.value.text,
+                                    lateTime: _lateAllowedController.value.text,
+                                    img: p.basename(_image.path));
+
+                            modelDoctorInfo.toMap();
+
+                            print(
+                                "model info info page => ${modelDoctorInfo.toMap()}");
+
                             fdRef
                                 .child('doctorInfo')
                                 .child('clinicInfo')
-                                .child(auth.currentUser.uid)
+                                .child(auth.currentUser!.uid)
                                 .set({
                               "address": _addressController.value.text,
                               "clinicName": _clinicNameController.value.text,
                               "evening time": _eveningTimeController.value.text,
                               "fees": _feeController.value.text,
-                              "latitude": widget.location.latitude,
-                              "longitude": widget.location.longitude,
+                              "latitude": widget.location!.latitude,
+                              "longitude": widget.location!.longitude,
                               "morning time": _morningTimeController.value.text,
                               "name": doctorName,
                               "review": 0,
@@ -368,7 +387,7 @@ class _InformationState extends State<Information> {
                             }).then((value) async {
                               _firestore
                                   .collection('queue')
-                                  .doc(auth.currentUser.uid)
+                                  .doc(auth.currentUser!.uid)
                                   .set({"count": 0});
                               final prefs =
                                   await SharedPreferences.getInstance();
@@ -377,7 +396,8 @@ class _InformationState extends State<Information> {
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) => Homepage(
-                                            _clinicNameController.value.text),
+                                            _clinicNameController.value.text,
+                                            modelDoctorInfo),
                                       ),
                                     ),
                                   );
@@ -404,10 +424,10 @@ class _InformationState extends State<Information> {
 
 class NewTextFieldForInfo extends StatelessWidget {
   const NewTextFieldForInfo({
-    Key key,
-    @required this.controller,
-    @required this.hintText,
-    @required this.textInputType,
+    Key? key,
+    required this.controller,
+    required this.hintText,
+    required this.textInputType,
     this.obscure,
     this.maxlength,
     this.maxLine,
@@ -416,9 +436,9 @@ class NewTextFieldForInfo extends StatelessWidget {
   final TextEditingController controller;
   final String hintText;
   final TextInputType textInputType;
-  final bool obscure;
-  final int maxlength;
-  final int maxLine;
+  final obscure;
+  final maxlength;
+  final maxLine;
 
   @override
   Widget build(BuildContext context) {

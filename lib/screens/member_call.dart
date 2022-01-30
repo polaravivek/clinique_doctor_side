@@ -1,8 +1,11 @@
 import 'dart:collection';
 import 'dart:convert';
+import 'package:clinique_doctor/controller/homepage.controller.dart';
 import 'package:clinique_doctor/widgets/build_queue_member.dart';
+import 'package:clinique_doctor/widgets/navigation_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -26,25 +29,32 @@ class MemberCall extends StatefulWidget {
 
 class _MemberCallState extends State<MemberCall> {
   List<String> _arr = [];
-  List<String> _tokens = [];
+  List<String?> _tokens = [];
+  HomePageController homePageController = Get.find<HomePageController>();
 
   FirebaseMessaging firebaseMessaging = FirebaseMessaging.instance;
 
-  String constructFCMPayload(String token, int number) {
+  String constructFCMPayload(String token, int? number) {
+    print("your number => $number");
     return jsonEncode({
       'to': token,
-      'data': {},
+      'data': {
+        "clinicId": widget.uid,
+        "doctorModelInfo": homePageController.modelDoctorInfo,
+      },
       'notification': {
         'title': (number != null)
-            ? (number == 0)
-                ? "It's Your Turn"
-                : (number == 1)
-                    ? "It's Your Number Go!"
-                    : (number == 2)
-                        ? "Be Ready You Have To Go Next"
-                        : (number != 3)
-                            ? "Your Number: $number"
-                            : "Your Number Is About To Come"
+            ? (number == -1)
+                ? "Thank You For Visit"
+                : (number == 0)
+                    ? "It's Your Turn"
+                    : (number == 1)
+                        ? "It's Your Number Go!"
+                        : (number == 2)
+                            ? "Be Ready You Have To Go Next"
+                            : (number != 3)
+                                ? "Your Number: $number"
+                                : "Your Number Is About To Come"
             : "Put You On Hold",
         'body': (number != null)
             ? 'sent to you from ${widget.title}'
@@ -53,7 +63,7 @@ class _MemberCallState extends State<MemberCall> {
     });
   }
 
-  Future<void> sendPushMessage(String _token, int index) async {
+  Future<void> sendPushMessage(String? _token, int? index) async {
     if (_token == null) {
       print('Unable to send FCM message, no token exists.');
       return;
@@ -68,7 +78,7 @@ class _MemberCallState extends State<MemberCall> {
               'Authorization':
                   'key=AAAANUzwdEg:APA91bGheTPXvLz8S-zhS7FeBUbg8ySrVItGRUotk2hyDraw8E43GOdTU_5bUfrjpzULa1YX5Mk5ntZ4OOyclEvtNpXw49eHTi8LPWIL0-SVPcYjz5Cw-uZciQlkb_pZuariOw3e6rdW',
             },
-            body: constructFCMPayload(_token, index),
+            body: constructFCMPayload(_token, index!),
           )
           .then((value) => print(value.body));
       print('FCM request for device sent!');
@@ -82,6 +92,7 @@ class _MemberCallState extends State<MemberCall> {
     return SafeArea(
       child: Scaffold(
         backgroundColor: Color(0xffFFC7C7),
+        drawer: navigationDrawer(context),
         appBar: AppBar(
           centerTitle: true,
           actionsIconTheme: IconThemeData(color: Colors.white),
@@ -126,10 +137,10 @@ class _MemberCallState extends State<MemberCall> {
                                   if (!snapshot.hasData) {
                                     return Text("loading....");
                                   }
-                                  final snap = snapshot.data.docs;
+                                  final snap = snapshot.data!.docs;
 
                                   for (var sn in snap) {
-                                    if (sn.id == auth.currentUser.uid) {
+                                    if (sn.id == auth.currentUser!.uid) {
                                       _count = sn.get('count');
                                       break;
                                     }
@@ -180,10 +191,10 @@ class _MemberCallState extends State<MemberCall> {
                                   if (!snapshot.hasData) {
                                     return Text("loading....");
                                   }
-                                  final snap = snapshot.data.docs;
+                                  final snap = snapshot.data!.docs;
 
                                   for (var sn in snap) {
-                                    if (sn.id == auth.currentUser.uid) {
+                                    if (sn.id == auth.currentUser!.uid) {
                                       _count = sn.get('count');
                                       break;
                                     }
@@ -214,10 +225,10 @@ class _MemberCallState extends State<MemberCall> {
                   child: StreamBuilder(
                     stream: _firestore
                         .collection('queue')
-                        .doc('${auth.currentUser.uid}')
+                        .doc('${auth.currentUser!.uid}')
                         .collection('queue')
                         .orderBy('time')
-                        .limit(3)
+                        .limit(4)
                         .snapshots(),
                     builder: (BuildContext context,
                         AsyncSnapshot<QuerySnapshot> snapshot) {
@@ -228,7 +239,7 @@ class _MemberCallState extends State<MemberCall> {
                             frameRate: FrameRate(60),
                             repeat: true);
                       } else {
-                        final snap = snapshot.data.docs;
+                        final snap = snapshot.data!.docs;
                         _arr.clear();
                         _tokens.clear();
                         int index = 0;
@@ -238,9 +249,10 @@ class _MemberCallState extends State<MemberCall> {
                             print(_firstUid);
                           }
 
-                          LinkedHashMap<String, dynamic> s = sn.data();
-                          var name = s['name'];
-                          String token = s['token'];
+                          LinkedHashMap<String, dynamic>? s =
+                              sn.data() as LinkedHashMap<String, dynamic>?;
+                          var name = s!['name'];
+                          String? token = s['token'];
                           _arr.add(name);
                           _tokens.add(token);
                           index++;
@@ -252,7 +264,7 @@ class _MemberCallState extends State<MemberCall> {
                         } else {
                           return ListView.builder(
                             scrollDirection: Axis.vertical,
-                            itemCount: _arr.length,
+                            itemCount: _arr.length > 3 ? 3 : _arr.length,
                             itemBuilder: (_, index) {
                               return queueMember(
                                   "${_arr[index]}",
@@ -299,6 +311,7 @@ class _MemberCallState extends State<MemberCall> {
                                 .then((value) {
                               final elem = value.docs.first;
                               print(elem.data());
+                              sendPushMessage(elem.data()['token'], -1);
                               elem.reference.delete().then((value) {
                                 _firestore
                                     .collection('queue')
@@ -358,7 +371,7 @@ class _MemberCallState extends State<MemberCall> {
                               print(elem.data()['token']);
                               _firestore
                                   .collection('queue')
-                                  .doc('${auth.currentUser.uid}')
+                                  .doc('${auth.currentUser!.uid}')
                                   .collection('holdQueue')
                                   .doc(elem.id)
                                   .set(elem.data())

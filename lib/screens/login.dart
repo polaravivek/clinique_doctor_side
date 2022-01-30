@@ -1,3 +1,4 @@
+import 'package:clinique_doctor/model/doctor_info.dart';
 import 'package:clinique_doctor/screens/homepage.dart';
 import 'package:clinique_doctor/screens/info.dart';
 import 'package:flutter/cupertino.dart';
@@ -13,7 +14,7 @@ class Login extends StatefulWidget {
 }
 
 class _LoginState extends State<Login> {
-  String email, password;
+  late String email, password;
   final auth = FirebaseAuth.instance;
   final fdRef = FirebaseDatabase.instance.reference();
 
@@ -139,10 +140,10 @@ class _LoginState extends State<Login> {
                                     fdRef
                                         .child('doctorInfo')
                                         .child('clinicInfo')
-                                        .child('${auth.currentUser.uid}')
+                                        .child('${auth.currentUser!.uid}')
                                         .get()
                                         .then((value) {
-                                      if (value.value == null) {
+                                      if (value?.value == null) {
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
@@ -151,11 +152,15 @@ class _LoginState extends State<Login> {
                                           ),
                                         );
                                       } else {
+                                        ModelDoctorInfo modelInfo =
+                                            ModelDoctorInfo.fromMap(
+                                                Map.from(value!.value));
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
                                             builder: (context) => Homepage(
-                                                value.value["clinicName"]),
+                                                value.value["clinicName"],
+                                                modelInfo),
                                           ),
                                         );
                                       }
