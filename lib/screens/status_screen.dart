@@ -1,4 +1,5 @@
 import 'package:clinique_doctor/screens/event_editing_dialog.dart';
+import 'package:clinique_doctor/screens/homepage.dart';
 import 'package:clinique_doctor/widgets/calendar_widget.dart';
 import 'package:clinique_doctor/widgets/navigation_drawer.dart';
 import 'package:flutter/material.dart';
@@ -24,6 +25,8 @@ class StatusScreen extends StatelessWidget {
           },
           child: Icon(Icons.add),
         ),
-        body: CalendarWidget());
+        body: CalendarWidget(
+          clinicId: auth.currentUser!.uid,
+        ));
   }
 }
