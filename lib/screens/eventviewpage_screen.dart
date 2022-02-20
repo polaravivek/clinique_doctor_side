@@ -3,6 +3,8 @@ import 'package:clinique_doctor/model/event.dart';
 import 'package:clinique_doctor/screens/event_editing_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:styled_widget/styled_widget.dart';
 
 class EventViewingPage extends StatefulWidget {
@@ -17,6 +19,9 @@ class EventViewingPage extends StatefulWidget {
 class _EventViewingPageState extends State<EventViewingPage> {
   final EventViewPageController eventViewPageController =
       Get.put(EventViewPageController());
+  FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  FirebaseAuth auth = FirebaseAuth.instance;
+
   @override
   Widget build(BuildContext context) {
     return Material(
@@ -42,7 +47,19 @@ class _EventViewingPageState extends State<EventViewingPage> {
                 icon: Icon(Icons.edit),
               ),
               IconButton(
-                onPressed: () {},
+                onPressed: () {
+                  var id = widget.eventDetails.id;
+                  print(id);
+                  _firestore
+                      .collection("custom_status")
+                      .doc(auth.currentUser!.uid)
+                      .collection("status")
+                      .doc(id)
+                      .delete()
+                      .then((value) {
+                    Navigator.pop(context);
+                  });
+                },
                 icon: Icon(Icons.delete),
               ),
             ],
