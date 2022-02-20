@@ -7,9 +7,13 @@ class CalendarScreenController extends GetxController {
   FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
   RxMap appointmentData = {}.obs;
 
-  changeSelectedDate(DateTime date) => selectedDate.value = date;
+  changeSelectedDate(DateTime date) {
+    selectedDate.value = date;
+    getAllAlreadyTakenSlots();
+  }
 
   getAllAlreadyTakenSlots() {
+    appointmentData.clear();
     var result = firebaseFirestore
         .collection("appointments")
         .doc(auth.currentUser!.uid)
@@ -18,7 +22,9 @@ class CalendarScreenController extends GetxController {
 
     result.listen((data) {
       // print("data $data");
-      appointmentData.value = data![selectedDate.value.toString()];
+      if (data![selectedDate.value.toString()] != null) {
+        appointmentData.value = data[selectedDate.value.toString()];
+      }
     });
   }
 }

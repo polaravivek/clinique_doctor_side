@@ -8,7 +8,7 @@ import 'package:firebase_database/firebase_database.dart';
 class HomePageController extends GetxController {
   final RxString selectedString = "Home".obs;
   final FirebaseAuth auth = FirebaseAuth.instance;
-  final databaseRef = FirebaseDatabase.instance.reference();
+  final databaseRef = FirebaseDatabase.instance.ref();
   FirebaseFirestore firestore = FirebaseFirestore.instance;
 
   late ModelDoctorInfo modelDoctorInfo;
@@ -17,7 +17,9 @@ class HomePageController extends GetxController {
 
   @override
   void onInit() async {
-    await getModelInfo(auth.currentUser!.uid);
+    if (auth.currentUser != null) {
+      await getModelInfo(auth.currentUser!.uid);
+    }
     super.onInit();
   }
 
@@ -34,21 +36,23 @@ class HomePageController extends GetxController {
           .child(uid)
           .get()
           .then((value2) {
-        name = value2!.value["name"];
+        var snap = value2.value as Map<dynamic, dynamic>;
+        name = snap["name"];
         databaseRef
             .child("doctorInfo")
             .child("clinicInfo")
             .child(uid)
             .get()
             .then((value1) {
-          if (value1!.key == uid) {
-            var img = value1.value["img"];
+          if (value1.key == uid) {
+            var snap = value1.value as Map<dynamic, dynamic>;
+            var img = snap["img"];
             FirebaseStorage.instance
                 .ref()
                 .child(img)
                 .getDownloadURL()
                 .then((url) {
-              Map<String, dynamic> map = Map.from(value1.value);
+              Map<String, dynamic> map = Map.from(snap);
               print(map);
               map["count"] = count.toString();
               map["docId"] = uid;

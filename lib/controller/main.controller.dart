@@ -21,7 +21,9 @@ class MainController extends GetxService {
 
   @override
   void onInit() {
-    getAllEvents(auth.currentUser!.uid);
+    if (auth.currentUser != null) {
+      getAllEvents(auth.currentUser!.uid);
+    }
     super.onInit();
   }
 

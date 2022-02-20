@@ -143,7 +143,7 @@ class _LoginState extends State<Login> {
                                         .child('${auth.currentUser!.uid}')
                                         .get()
                                         .then((value) {
-                                      if (value?.value == null) {
+                                      if (value.value == null) {
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
@@ -152,15 +152,17 @@ class _LoginState extends State<Login> {
                                           ),
                                         );
                                       } else {
+                                        var snap = value.value
+                                            as Map<dynamic, dynamic>;
                                         ModelDoctorInfo modelInfo =
-                                            ModelDoctorInfo.fromMap(
-                                                Map.from(value!.value));
+                                            ModelDoctorInfo.fromMap(Map.from(
+                                                value.value
+                                                    as Map<dynamic, dynamic>));
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
                                             builder: (context) => Homepage(
-                                                value.value["clinicName"],
-                                                modelInfo),
+                                                snap["clinicName"], modelInfo),
                                           ),
                                         );
                                       }

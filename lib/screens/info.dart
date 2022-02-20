@@ -66,9 +66,10 @@ class _InformationState extends State<Information> {
         .child('doctorInfo')
         .child('doctorPersonalInfo')
         .child('${auth.currentUser?.uid}')
-        .reference();
-    snaps.once().then((DataSnapshot snapshot) {
-      doctorName = snapshot.value['name'];
+        .ref;
+    snaps.get().then((DataSnapshot snap) {
+      var snapshot = snap.value as Map<dynamic, dynamic>;
+      doctorName = snapshot['name'];
     });
 
     if (widget.model != null) {
@@ -112,7 +113,7 @@ class _InformationState extends State<Information> {
         return;
       }
 
-      var file = await ImageCropper.cropImage(
+      var file = await ImageCropper().cropImage(
         sourcePath: image.path,
         aspectRatio: CropAspectRatio(ratioX: 1, ratioY: 1),
       );

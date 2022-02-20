@@ -33,7 +33,6 @@ class CalendarWidget extends StatelessWidget {
             onTap: (calendarTapDetails) {
               if (isAppointment) {
                 controller.changeSelectedDate(calendarTapDetails.date!);
-                controller.getAllAlreadyTakenSlots();
                 Navigator.of(context).push(
                     MaterialPageRoute(builder: (context) => TimeSlotScreen()));
               }

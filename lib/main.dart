@@ -89,7 +89,7 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   final auth = FirebaseAuth.instance;
-  final fdRef = FirebaseDatabase.instance.reference();
+  final fdRef = FirebaseDatabase.instance.ref();
   MainController mainController = Get.put(MainController());
   HomePageController homePageController = Get.find<HomePageController>();
 
@@ -102,10 +102,11 @@ class _MyAppState extends State<MyApp> {
           .child("doctorInfo")
           .child("clinicInfo")
           .child(auth.currentUser!.uid)
-          .once()
+          .get()
           .then((value) {
         setState(() {
-          clinicName = value.value['clinicName'];
+          var snapshot = value.value as Map<dynamic, dynamic>;
+          clinicName = snapshot['clinicName'];
           mainController.clinicTitle.value = clinicName;
         });
         startTime();

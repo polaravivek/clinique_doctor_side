@@ -19,7 +19,7 @@ dependencies:
   flutter_polyline_points: ^1.0.0
   font_awesome_flutter: ^9.2.0
   geocoding: ^2.0.1
-  geolocator: 7.0.3
+  geolocator: ^8.2.0
   get: ^4.6.1
   google_maps_flutter: ^2.1.1
   gradient_widgets: ^0.6.0
@@ -29,17 +29,17 @@ dependencies:
   lint: ^1.8.1
   lottie: ^1.1.0
   path_provider: ^2.0.7
-  shared_preferences: 2.0.6
+  shared_preferences: ^2.0.13
   splashscreen: null
   styled_widget: ^0.4.0+3
   syncfusion_flutter_calendar: ^19.4.43
 
 dev_dependencies:
-  cloud_firestore: 2.3.0
-  firebase_analytics: 8.1.2
-  firebase_auth: 2.0.0
+  cloud_firestore: ^3.1.8
+  firebase_analytics: ^9.1.0
+  firebase_auth: ^3.3.7
   firebase_core: ^1.10.0
-  firebase_database: 7.1.1
+  firebase_database: ^9.0.6
   flutter_test:
     sdk: flutter
 

@@ -12,8 +12,8 @@ class EventEditingDialog extends StatefulWidget {
   EventEditingDialog({Key? key, this.event, this.isForEdit = false})
       : super(key: key);
 
-  Event? event;
-  bool isForEdit;
+  final Event? event;
+  final bool isForEdit;
 
   @override
   State<EventEditingDialog> createState() => _EventEditingDialogState();
@@ -174,37 +174,25 @@ class _EventEditingDialogState extends State<EventEditingDialog> {
 
   Widget buildFrom() => buildHeader(
         header: "From",
-        child: Row(children: [
-          Expanded(
-            flex: 3,
-            child: buildDropdownField(
-                text: Utils.toDate(fromDate),
-                onClicked: () => pickFromDateTime(pickDate: true)),
-          ),
-          Expanded(
-            flex: 2,
-            child: buildDropdownField(
-                text: Utils.toTime(fromDate),
-                onClicked: () => pickFromDateTime(pickDate: false)),
-          )
+        child: Column(children: [
+          buildDropdownField(
+              text: Utils.toDate(fromDate),
+              onClicked: () => pickFromDateTime(pickDate: true)),
+          buildDropdownField(
+              text: Utils.toTime(fromDate),
+              onClicked: () => pickFromDateTime(pickDate: false))
         ]),
       );
 
   Widget buildTo() => buildHeader(
         header: "To",
-        child: Row(children: [
-          Expanded(
-            flex: 3,
-            child: buildDropdownField(
-                text: Utils.toDate(toDate),
-                onClicked: () => pickToDateTime(pickDate: true)),
-          ),
-          Expanded(
-            flex: 2,
-            child: buildDropdownField(
-                text: Utils.toTime(toDate),
-                onClicked: () => pickToDateTime(pickDate: false)),
-          )
+        child: Column(children: [
+          buildDropdownField(
+              text: Utils.toDate(toDate),
+              onClicked: () => pickToDateTime(pickDate: true)),
+          buildDropdownField(
+              text: Utils.toTime(toDate),
+              onClicked: () => pickToDateTime(pickDate: false))
         ]),
       );
 
@@ -219,7 +207,7 @@ class _EventEditingDialogState extends State<EventEditingDialog> {
         onTap: onClicked,
       );
 
-  Widget buildHeader({required String header, required Row child}) => Column(
+  Widget buildHeader({required String header, required Column child}) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
